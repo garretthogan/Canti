@@ -14,4 +14,11 @@ class CANTI_API UCantiCharacterMovementComponent : public UCharacterMovementComp
 {
 	GENERATED_BODY()
 	
+protected:
+
+	/** @note Movement update functions should only be called through StartNewPhysics()*/
+	virtual void PhysWalking(float deltaTime, int32 Iterations);
+
+	/** Handle falling movement. */
+	virtual void PhysFalling(float deltaTime, int32 Iterations);
 };
