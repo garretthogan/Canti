@@ -17,8 +17,8 @@ class CANTI_API UCantiCharacterMovementComponent : public UCharacterMovementComp
 protected:
 
 	/** @note Movement update functions should only be called through StartNewPhysics()*/
-	virtual void PhysWalking(float deltaTime, int32 Iterations);
+	virtual void PhysWalking(float deltaTime, int32 Iterations) override;
 
 	/** Handle falling movement. */
-	virtual void PhysFalling(float deltaTime, int32 Iterations);
+	virtual void PhysFalling(float deltaTime, int32 Iterations) override;
 };

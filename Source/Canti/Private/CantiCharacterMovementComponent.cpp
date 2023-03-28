@@ -262,6 +262,7 @@ void UCantiCharacterMovementComponent::PhysWalking(float deltaTime, int32 Iterat
 	{
 		MaintainHorizontalGroundVelocity();
 	}
+	
 }
 
 void UCantiCharacterMovementComponent::PhysFalling(float deltaTime, int32 Iterations)
@@ -468,6 +469,7 @@ void UCantiCharacterMovementComponent::PhysFalling(float deltaTime, int32 Iterat
 
 				const FVector OldHitNormal = Hit.Normal;
 				const FVector OldHitImpactNormal = Hit.ImpactNormal;
+				// maybe this should also include Z
 				FVector Delta = ComputeSlideVector(Adjusted, 1.f - Hit.Time, OldHitNormal, Hit);
 
 				// Compute velocity after deflection (only gravity component for RootMotion)
@@ -482,6 +484,22 @@ void UCantiCharacterMovementComponent::PhysFalling(float deltaTime, int32 Iterat
 				{
 					const FVector NewVelocity = (Delta / subTimeTickRemaining);
 					Velocity = HasAnimRootMotion() || CurrentRootMotion.HasOverrideVelocityWithIgnoreZAccumulate() ? FVector(Velocity.X, Velocity.Y, NewVelocity.Z) : NewVelocity;
+				}
+
+				if (Hit.Normal.Z < .2f && Hit.Normal.Z > -.2f)
+				{
+					// https://www.wired.com/story/how-to-run-up-a-wall-with-physics/
+					
+					// the greater the magnitude on impact, the stronger the friction force will push you up
+					// before gravity can pull you back down, then, if you time your jump right, you can land 
+					// upon a higher surface and repeat that to access seemingly inaccessible spots
+
+					const float Magnitude = Velocity.Length();
+					const float ZForce = Magnitude * FMath::Abs(Hit.Normal.Y) * deltaTime - remainingTime;
+
+					//GEngine->AddOnScreenDebugMessage(1, 2.5f, FColor::Orange, FString::Printf(TEXT("hit normal: %s"), *Hit.Normal.ToString()));
+					Velocity = FVector(Velocity.X, Velocity.Y, ZForce);
+					//GEngine->AddOnScreenDebugMessage(0, 2.5f, FColor::Green, FString::Printf(TEXT("velocity: %s"), *Velocity.ToString()));
 				}
 
 				if (subTimeTickRemaining > UE_KINDA_SMALL_NUMBER && (Delta | Adjusted) > 0.f)
