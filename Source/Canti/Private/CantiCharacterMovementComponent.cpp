@@ -9,7 +9,8 @@
 DECLARE_CYCLE_STAT(TEXT("Char PhysWalking"), STAT_CharPhysWalking, STATGROUP_Character);
 DECLARE_CYCLE_STAT(TEXT("Char PhysFalling"), STAT_CharPhysFalling, STATGROUP_Character);
 
-namespace CharacterMovementConstants
+
+namespace MyCharacterMovementConstants
 {
 	// MAGIC NUMBERS
 	const float MAX_STEP_SIDE_Z = 0.08f;	// maximum z value for the normal on the vertical side of steps
@@ -17,7 +18,9 @@ namespace CharacterMovementConstants
 	const float VERTICAL_SLOPE_NORMAL_Z = 0.001f; // Slope is vertical if Abs(Normal.Z) <= this threshold. Accounts for precision problems that sometimes angle normals slightly off horizontal for vertical surface.
 }
 
-namespace CharacterMovementCVars
+
+
+namespace MyCharacterMovementCVars
 {
 	static int32 UseTargetVelocityOnImpact = 1;
 	FAutoConsoleVariableRef CVarUseTargetVelocityOnImpact(
@@ -31,6 +34,7 @@ namespace CharacterMovementCVars
 		TEXT("If 1, force a jump substep to always reach the peak position of a jump, which can often be cut off as framerate lowers."),
 		ECVF_Default);
 }
+
 
 #if DO_CHECK && !UE_BUILD_SHIPPING // Disable even if checks in shipping are enabled.
 #define devCode( Code )		checkCode( Code )
@@ -338,7 +342,7 @@ void UCantiCharacterMovementComponent::PhysFalling(float deltaTime, int32 Iterat
 		DecayFormerBaseVelocity(timeTick);
 
 		// See if we need to sub-step to exactly reach the apex. This is important for avoiding "cutting off the top" of the trajectory as framerate varies.
-		if (CharacterMovementCVars::ForceJumpPeakSubstep && OldVelocityWithRootMotion.Z > 0.f && Velocity.Z <= 0.f && NumJumpApexAttempts < MaxJumpApexAttemptsPerSimulation)
+		if (MyCharacterMovementCVars::ForceJumpPeakSubstep && OldVelocityWithRootMotion.Z > 0.f && Velocity.Z <= 0.f && NumJumpApexAttempts < MaxJumpApexAttemptsPerSimulation)
 		{
 			const FVector DerivedAccel = (Velocity - OldVelocityWithRootMotion) / timeTick;
 			if (!FMath::IsNearlyZero(DerivedAccel.Z))
@@ -474,7 +478,7 @@ void UCantiCharacterMovementComponent::PhysFalling(float deltaTime, int32 Iterat
 
 				// Compute velocity after deflection (only gravity component for RootMotion)
 				const UPrimitiveComponent* HitComponent = Hit.GetComponent();
-				if (CharacterMovementCVars::UseTargetVelocityOnImpact && !Velocity.IsNearlyZero() && MovementBaseUtility::IsSimulatedBase(HitComponent))
+				if (MyCharacterMovementCVars::UseTargetVelocityOnImpact && !Velocity.IsNearlyZero() && MovementBaseUtility::IsSimulatedBase(HitComponent))
 				{
 					const FVector ContactVelocity = MovementBaseUtility::GetMovementBaseVelocity(HitComponent, NAME_None) + MovementBaseUtility::GetMovementBaseTangentialVelocity(HitComponent, NAME_None, Hit.ImpactPoint);
 					const FVector NewVelocity = Velocity - Hit.ImpactNormal * FVector::DotProduct(Velocity - ContactVelocity, Hit.ImpactNormal);
@@ -529,7 +533,7 @@ void UCantiCharacterMovementComponent::PhysFalling(float deltaTime, int32 Iterat
 						}
 
 						// Act as if there was no air control on the last move when computing new deflection.
-						if (bHasLimitedAirControl && Hit.Normal.Z > CharacterMovementConstants::VERTICAL_SLOPE_NORMAL_Z)
+						if (bHasLimitedAirControl && Hit.Normal.Z > MyCharacterMovementConstants::VERTICAL_SLOPE_NORMAL_Z)
 						{
 							const FVector LastMoveNoAirControl = VelocityNoAirControl * LastMoveTimeSlice;
 							Delta = ComputeSlideVector(LastMoveNoAirControl, 1.f, OldHitNormal, Hit);
